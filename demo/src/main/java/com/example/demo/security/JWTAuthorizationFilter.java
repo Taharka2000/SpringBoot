@@ -26,23 +26,39 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        // Add CORS headers
+        response.addHeader("Access-Control-Allow-Credentials", "localhost:4200");
+		response.addHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT,DELETE");
+		response.addHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, "
+				+ "Origin,Accept, X-Requested-With, Content-Type, "
+				+ "Access-Control-Request-Method, Access-Control-Request-Headers, Authorization");
+		response.addHeader("Access-Control-Expose-Headers","Authorization,"
+				+ " Access-Control-Allow-Credentials ");
+
+		if (request.getMethod().equals("OPTIONS"))
+				{
+					response.setStatus(HttpServletResponse.SC_OK);
+		return;
+				}
+
         String jwt = request.getHeader("Authorization");
-        if (jwt == null || !jwt.startsWith(SecParams.PREFIX)) {
+        if (jwt == null || !jwt.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
+
         JWTVerifier verifier = JWT.require(Algorithm.HMAC256(SecParams.SECRET)).build();
-        // enlever le préfixe Bearer du jwt
-        jwt = jwt.substring(SecParams.PREFIX.length()); // 7 caractères dans "Bearer "
+        jwt = jwt.substring("Bearer ".length()); // Remove the "Bearer " prefix
         DecodedJWT decodedJWT = verifier.verify(jwt);
         String username = decodedJWT.getSubject();
         List<String> roles = decodedJWT.getClaims().get("roles").asList(String.class);
-        Collection<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-        for (String r:roles)
-            authorities.add(new SimpleGrantedAuthority(r));
-        UsernamePasswordAuthenticationToken user = new UsernamePasswordAuthenticationToken(username, null,
-                authorities);
-        SecurityContextHolder.getContext().setAuthentication(user);
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        for (String role : roles) {
+            authorities.add(new SimpleGrantedAuthority(role));
+        }
+
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
         filterChain.doFilter(request, response);
     }
 }

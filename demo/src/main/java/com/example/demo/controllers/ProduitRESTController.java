@@ -3,6 +3,7 @@ package com.example.demo.controllers;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.dto.ProduitDTO;
@@ -13,32 +14,33 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin // pour la securite
+@CrossOrigin("*") // pour la securite
 public class ProduitRESTController {
     @Autowired
     ProduitService produitService;
 
-    @GetMapping
+    @GetMapping(path = "/all")
     public List<ProduitDTO> getAllProduits() {
         return produitService.getAllProduits();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/getbyid/{id}")
     public ProduitDTO geProduitByIDProduit(@PathVariable("id") Long id) {
         return produitService.getProduit(id);
     }
 
-    @PostMapping
+    @PostMapping(path = "/addprod")
+  
     public ProduitDTO createProduit(@RequestBody ProduitDTO produitDTO) {
         return produitService.saveProduit(produitDTO);
     }
 
-    @PutMapping
+    @PutMapping(path = "/updateprod")
     public ProduitDTO updateProduit(@RequestBody ProduitDTO produitDTO) {
         return produitService.updateProduit(produitDTO);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/deletprod/{id}")
     public void deleteProduit(@PathVariable("id") Long id) {
         produitService.deleteProduitById(id);
     }
